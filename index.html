@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="http://127.0.0.1:5500/contact.html">
+  <link rel="stylesheet" href="http://127.0.0.1:5500/about.html">
+  <title>Mi Colección de Películas</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* dark navy */
+      --card:#0b1220;
+      --accent:#ff6b6b;
+      --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+      background: linear-gradient(180deg,var(--bg), #071022 120%);
+      color:#e6eef8; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      min-height:100vh; display:flex; flex-direction:column;
+    }
+    header{
+      padding:20px 28px; display:flex; gap:16px; align-items:center; justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,0.03);
+      background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00));
+      position:sticky; top:0; z-index:20;
+    }
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:48px; height:48px; border-radius:8px; background:linear-gradient(135deg,var(--accent), #ff9b6b); display:flex; align-items:center; justify-content:center; font-weight:700; color:#081020}
+    h1{font-size:18px; margin:0}
+    .controls{display:flex; gap:12px; align-items:center}
+    .search{background:var(--glass); border:1px solid rgba(255,255,255,0.03); padding:8px 12px; border-radius:10px; color:var(--muted); min-width:220px}
+    .select{background:transparent; border:1px solid rgba(255,255,255,0.03); padding:8px 10px; border-radius:10px; color:var(--muted)}
+
+    main{padding:24px; flex:1}
+    .grid{display:grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap:20px}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; overflow:hidden; box-shadow:0 6px 24px rgba(2,6,23,0.6); transition:transform .18s ease, box-shadow .18s ease; border:1px solid rgba(255,255,255,0.03)}
+    .card:hover{transform:translateY(-6px); box-shadow:0 12px 34px rgba(2,6,23,0.75)}
+    .poster{width:100%; aspect-ratio: 2/3; object-fit:cover; display:block}
+    .meta{padding:12px}
+    .title{font-size:15px; margin:0 0 6px 0}
+    .sub{font-size:13px; color:var(--muted); margin-bottom:8px}
+    .desc{font-size:13px; color:#cfe3ff; opacity:0.9; height:40px; overflow:hidden}
+    .actions{display:flex; gap:8px; margin-top:10px}
+    .btn{padding:8px 10px; border-radius:8px; border:0; cursor:pointer; font-weight:600}
+    .btn-primary{background:var(--accent); color:#071020}
+    .btn-ghost{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03)}
+
+    /* modal */
+    .overlay{position:fixed; inset:0; background:rgba(4,8,15,0.6); display:none; align-items:center; justify-content:center; z-index:60}
+    .overlay.show{display:flex}
+    .modal{width:min(960px,94%); background:linear-gradient(180deg,#071022 0%, #071022); border-radius:12px; padding:18px; box-shadow:0 20px 60px rgba(2,6,23,0.9)}
+    .modal .top{display:flex; gap:16px}
+    .modal .m-poster{width:200px; height:300px; object-fit:cover; border-radius:8px}
+    .m-body{flex:1}
+    .close{background:transparent; border:0; color:var(--muted); font-size:20px; cursor:pointer}
+    .trailer{margin-top:12px}
+
+    /* empty */
+    .empty{padding:80px; text-align:center; color:var(--muted)}
+
+    /* responsive tweaks */
+    @media (max-width:600px){
+      .controls{flex-direction:column; align-items:stretch}
+      .brand h1{font-size:16px}
+      .m-poster{display:none}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">🎬</div>
+      <div>
+        <h1>Mi Colección de Películas</h1>
+        <div style="font-size:12px;color:var(--muted)">Guarda tus títulos favoritos</div>
+      </div>
+    </div>
+    <div class="controls">
+      <input id="search" class="search" placeholder="Buscar título, actor o año..." />
+      <select id="genre" class="select">
+        <option value="all">Todos los géneros</option>
+        <option value="action">Acción</option>
+        <option value="drama">Drama</option>
+        <option value="comedy">Comedia</option>
+        <option value="sci-fi">Ciencia ficción</option>
+      </select>
+      <select id="sort" class="select">
+        <option value="newest">Más recientes</option>
+        <option value="oldest">Más antiguos</option>
+        <option value="title">A → Z</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" style="display:none">No se encontraron películas.</div>
+  </main>
+
+  <!-- modal -->
+  <div id="overlay" class="overlay" role="dialog" aria-hidden="true">
+    <div class="modal" role="document">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong id="m-title"></strong>
+        <button class="close" id="close">✕</button>
+      </div>
+      <div class="top" style="margin-top:12px">
+        <img id="m-poster" class="m-poster" src="" alt="poster">
+        <div class="m-body">
+          <div id="m-meta" style="color:var(--muted); margin-bottom:8px"></div>
+          <div id="m-desc" style="line-height:1.4"></div>
+          <div class="trailer" id="m-trailer"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Ejemplo de datos: reemplaza, añade o carga desde un backend
+    const movies = [
+      {
+        id:1,
+        title:'Los 100', year:2010, genre:'sci-fi',
+        poster:'https://images.justwatch.com/poster/243673095/s332/temporada-4',
+        desc:'historia de un grupo de jóvenes enviados a la Tierra desde una estación espacial, casi un siglo después de un apocalipsis nuclear que destruyó la civilización',
+        trailer:'https://www.youtube.com/embed/_edS1crSr2Q'
+      },
+      {
+        id:2,
+        title:'The Grand Budapest Hotel', year:2014, genre:'comedy',
+        poster:'https://via.placeholder.com/400x600.png?text=Grand+Budapest',
+        desc:'Las aventuras de Gustave H., un conserje legendario en un famoso hotel europeo entre guerras, y Zero Moustafa, el botones que se convierte en su amigo más confiable.',
+        trailer:'https://www.youtube.com/embed/_edS1crSr2Q'
+      },
+      {
+        id:3,
+        title:'The Godfather', year:1972, genre:'drama',
+        poster:'https://via.placeholder.com/400x600.png?text=Godfather',
+        desc:'La crónica de la familia Corleone, una de las familias del crimen organizado más importantes de Estados Unidos.',
+        trailer:'https://www.youtube.com/embed/sY1S34973zA'
+      },
+      {
+        id:4,
+        title:'Mad Max: Fury Road', year:2015, genre:'action',
+        poster:'https://via.placeholder.com/400x600.png?text=Mad+Max',
+        desc:'En un mundo postapocalíptico, Max se une a Furiosa para huir de un señor de la guerra y su ejército en un frenético viaje por la supervivencia.',
+        trailer:'https://www.youtube.com/embed/hEJnMQG9ev8'
+      }
+    ];
+
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty');
+    const searchInput = document.getElementById('search');
+    const genreSelect = document.getElementById('genre');
+    const sortSelect = document.getElementById('sort');
+
+     function render(list){
+      grid.innerHTML = '';
+      if(!list.length){ empty.style.display='block'; return } else { empty.style.display='none' }
+      list.forEach(m => {
+        const card = document.createElement('div'); card.className='card';
+        card.innerHTML = `
+          <img loading="lazy" class="poster" src="${m.poster}" alt="${m.title}">
+          <div class="meta">
+            <h3 class="title">${m.title}</h3>
+            <div class="sub">${m.year} • ${capitalize(m.genre)}</div>
+            <div class="desc">${m.desc}</div>
+            <div class="actions">
+              <button class="btn btn-primary" data-id="${m.id}">Ver detalles</button>
+              <a href="about.html">
+
+              <button class="btn btn-ghost" onclick="window.location.href="http://127.0.0.1:5500/about.html">Reproducir</button>
+             </a>
+            
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      })
+      // 
+      // attach event listeners for detail buttons
+      document.querySelectorAll('.btn-primary').forEach(b => b.addEventListener('click', e => openModal(e.target.dataset.id)));
+    }
+
+    function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1) }
+
+    function applyFilters(){
+      const q = searchInput.value.trim().toLowerCase();
+      const g = genreSelect.value;
+      let list = movies.filter(m => {
+        const matchesQuery = !q || (m.title+ ' ' + m.desc + ' ' + m.year).toLowerCase().includes(q);
+        const matchesGenre = g==='all' || m.genre===g;
+        return matchesQuery && matchesGenre;z
+      });
+      // sorting
+      const sort = sortSelect.value;
+      if(sort==='newest') list.sort((a,b)=>b.year-a.year);
+      else if(sort==='oldest') list.sort((a,b)=>a.year-b.year);
+      else if(sort==='title') list.sort((a,b)=>a.title.localeCompare(b.title));
+
+      render(list);
+    }
+
+    // search controls
+    searchInput.addEventListener('input', applyFilters);
+    genreSelect.addEventListener('change', applyFilters);
+    sortSelect.addEventListener('change', applyFilters);
+
+    // modal logic
+    const overlay = document.getElementById('overlay');
+    const closeBtn = document.getElementById('close');
+    function openModal(id){
+      const m = movies.find(x=>x.id==id);
+      if(!m) return;
+      document.getElementById('m-title').textContent = m.title;
+      document.getElementById('m-poster').src = m.poster;
+      document.getElementById('m-meta').textContent = `${m.year} • ${capitalize(m.genre)}`;
+      document.getElementById('m-desc').textContent = m.desc;
+      document.getElementById('m-trailer').innerHTML = `<iframe src="${m.trailer}" width="100%" height="320" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      overlay.classList.add('show'); overlay.setAttribute('aria-hidden', 'false');
+    }
+    function closeModal(){ overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); document.getElementById('m-trailer').innerHTML=''; }
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+    // init
+    render(movies);
+  </script>
+</body>
+</html>

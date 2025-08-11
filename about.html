@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Episodios de Serie</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0a0a0a;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #f5c518;
+      margin-bottom: 10px;
+    }
+
+    select {
+      background-color: #1c1c1c;
+      color: #fff;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      margin-left: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background-color: #1e1e1e;
+      border-radius: 6px;
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .card img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-content {
+      padding: 10px;
+    }
+
+    .episode-code {
+      font-weight: bold;
+      color: #f5c518;
+      margin-bottom: 5px;
+    }
+
+    .episode-title {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .episode-time {
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>
+    Temporada
+    <select id="seasonSelect" onchange="renderEpisodios()">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+      <option value="5">5</option>
+      <option value="6">6</option>
+      <option value="7">7</option>
+    </select>
+  </h1>
+
+  <div class="grid" id="episodeGrid"></div>
+
+  <script>
+    const episodios = {};
+
+    // Imagen fija de The 100
+    const imagenThe100 = "https://pics.filmaffinity.com/the_hundred-674895049-large.jpg";
+
+    // Simular 7 temporadas con 13 episodios cada una
+    for (let temporada = 1; temporada <= 7; temporada++) {
+      episodios[temporada] = Array.from({ length: 13 }, (_, i) => ({
+        code: `${temporada}x${i + 1}`,
+        title: `The 100 Temporada ${temporada} Capítulo ${i + 1}`,
+        time: `${12 - temporada} años hace`,
+        image: imagenThe100
+      }));
+    }
+
+    function renderEpisodios() {
+      const season = document.getElementById('seasonSelect').value;
+      const grid = document.getElementById('episodeGrid');
+      grid.innerHTML = '';
+
+      episodios[season].forEach(ep => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+          <a href="contact.html" style="text-decoration:none; color:inherit; display:block;">
+            <img src="${ep.image}" alt="${ep.title}">
+            <div class="card-content">
+              <div class="episode-code">${ep.code}</div>
+              <div class="episode-title">${ep.title}</div>
+              <div class="episode-time">${ep.time}</div>
+            </div>
+          </a>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // Inicializar al cargar
+    renderEpisodios();
+  </script>
+
+</body>
+</html>
